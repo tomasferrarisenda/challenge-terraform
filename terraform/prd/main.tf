@@ -55,12 +55,24 @@ resource "aws_dynamodb_table" "terraform_locks" {
     }
 }
 
+##############################################################################################
+# IAM
+
+# module "iam_account" {
+#   source  = "../modules/iam-account"
+
+#   account_alias = "${var.project}-${var.environment_name}-challenge-terraform"
+
+#   minimum_password_length = 37
+#   require_numbers         = false
+# }
+
 
 ##############################################################################################
-# VPS
+# VPC
 
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source = "../modules/vpc"
 
   name = "${var.project}-${var.environment_name}-vpc"
   cidr = "10.0.0.0/16"
@@ -92,7 +104,7 @@ resource "aws_key_pair" "ssh-keys" {
 }
 
 module "ec2_instance" {
-  source  = "terraform-aws-modules/ec2-instance/aws"
+  source  = "../modules/ec2_instance"
 
   for_each = toset(["1", "2", "3"])
 
