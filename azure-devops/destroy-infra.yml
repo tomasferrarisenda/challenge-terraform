@@ -1,0 +1,47 @@
+name: destroy-infra
+
+trigger: none
+
+parameters:
+  - name: ENVIRONMENT
+    displayName: 'Select environment'
+    type: string
+    values:
+      - dev
+      - stg
+      - prd
+
+variables:
+  - group: aws-keys
+  - name: AWS_REGION
+    value: us-east-1 
+  - name: APP_NAME
+    value: vader 
+
+pool:
+  vmImage: 'ubuntu-latest' 
+
+steps:
+- task: TerraformInstaller@1
+  displayName: Install terraform
+  inputs:
+    terraformVersion: '1.4.6'
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Init'
+  inputs:
+    command: init
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}'
+    backendType: aws
+    backendServiceAws: aws
+    providerServiceAws: 'aws'
+    providerAwsRegion: $(AWS_REGION)
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Destroy AWS Infra'
+  inputs:
+    command: destroy
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}'
+    providerServiceAws: 'aws'
+    providerAwsRegion: $(AWS_REGION) 
+  continueOnError: true

@@ -1,0 +1,68 @@
+name: deploy-infra
+
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest' 
+
+parameters:
+  - name: ENVIRONMENT
+    displayName: 'Select environment'
+    type: string
+    values:
+      - dev
+      - stg
+      - prd
+
+variables:
+  AWS_REGION: us-east-1 
+
+steps:
+- checkout: self
+  persistCredentials: true
+
+- task: TerraformInstaller@1
+  displayName: install terraform
+  inputs:
+    terraformVersion: '1.4.6'
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Init Backend'
+  inputs:
+    command: init
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}-backend'
+    providerServiceAws: 'aws' 
+    providerAwsRegion: $(AWS_REGION) 
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Apply Backend'
+  inputs:
+    command: apply
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}-backend'
+    providerServiceAws: 'aws' 
+    providerAwsRegion: $(AWS_REGION) 
+
+- script: cp terraform/${{ parameters.ENVIRONMENT }}-backend/terraform.tfstate terraform/${{ parameters.ENVIRONMENT }}
+  displayName: 'Move terraform.tfstate to /terraform/${{ parameters.ENVIRONMENT }}/ directory'
+  condition: succeeded() 
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Init Infra'
+  condition: always()
+  inputs:
+    command: init
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}'
+    backendType: aws 
+    backendServiceAws: aws 
+    providerServiceAws: 'aws' 
+    providerAwsRegion: $(AWS_REGION) 
+    commandOptions: '-force-copy'
+
+- task: TerraformCLI@1
+  displayName: 'Terraform Apply Infra'
+  condition: always()
+  inputs:
+    command: apply
+    workingDirectory: 'terraform/${{ parameters.ENVIRONMENT }}'
+    providerServiceAws: 'aws' 
+    providerAwsRegion: $(AWS_REGION)
