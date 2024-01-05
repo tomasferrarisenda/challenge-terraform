@@ -58,14 +58,14 @@ resource "aws_dynamodb_table" "terraform_locks" {
 ##############################################################################################
 # IAM
 
-# module "iam_account" {
-#   source  = "../modules/iam-account"
+module "iam_account" {
+  source  = "../modules/iam-account"
 
-#   account_alias = "${var.project}-${var.environment_name}-challenge-terraform"
+  account_alias = "${var.project}-${var.environment_name}-challenge-terraform"
 
-#   minimum_password_length = 37
-#   require_numbers         = false
-# }
+  minimum_password_length = 37
+  require_numbers         = false
+}
 
 
 ##############################################################################################
